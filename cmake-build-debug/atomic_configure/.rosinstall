@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/ywl/catkin_ws/src/FAST_LIO/cmake-build-debug/devel/setup.sh

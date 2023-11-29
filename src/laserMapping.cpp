@@ -71,6 +71,7 @@ double T1[MAXN], s_plot[MAXN], s_plot2[MAXN], s_plot3[MAXN], s_plot4[MAXN], s_pl
 double match_time = 0, solve_time = 0, solve_const_H_time = 0;
 int    kdtree_size_st = 0, kdtree_size_end = 0, add_point_size = 0, kdtree_delete_counter = 0;
 bool   runtime_pos_log = false, pcd_save_en = false, time_sync_en = false, extrinsic_est_en = true, path_en = true;
+bool   save_pcd = false;
 /**************************/
 
 float res_last[100000] = {0.0};
@@ -784,6 +785,7 @@ int main(int argc, char** argv)
     nh.param<bool>("mapping/extrinsic_est_en", extrinsic_est_en, true);
     nh.param<bool>("pcd_save/pcd_save_en", pcd_save_en, false);
     nh.param<int>("pcd_save/interval", pcd_save_interval, -1);
+    nh.param<bool>("mapping/save_pcd", save_pcd, false);
     nh.param<vector<double>>("mapping/extrinsic_T", extrinT, vector<double>());
     nh.param<vector<double>>("mapping/extrinsic_R", extrinR, vector<double>());
     cout<<"p_pre->lidar_type "<<p_pre->lidar_type<<endl;
@@ -855,6 +857,20 @@ int main(int argc, char** argv)
     signal(SIGINT, SigHandle);
     ros::Rate rate(5000);
     bool status = ros::ok();
+
+
+    fstream pose_file;
+    pose_file.precision(9);
+    pose_file.setf(std::ios::fixed);
+
+    if (save_pcd)
+    {
+        pose_file.open(string(string(ROOT_DIR) + "map/pose.json"), std::ios::app);
+        pose_file << 0 << " " << 0 << " " << 0 << " " << 1 << " " << 0 << " " << 0 << " " << 0 << endl;
+        pose_file.close();
+    }
+    int lidar_id = 0;
+
     while (status)
     {
         if (flg_exit) break;
@@ -866,6 +882,14 @@ int main(int argc, char** argv)
                 first_lidar_time = Measures.lidar_beg_time;
                 p_imu->first_lidar_time = first_lidar_time;
                 flg_first_scan = false;
+
+                if (save_pcd)
+                {
+                    PointCloudXYZI::Ptr first_scan = Measures.lidar;
+                    pcl::io::savePCDFile(string(string(ROOT_DIR) + "map/pcd/" + to_string(lidar_id) + ".pcd"), *first_scan);
+                    lidar_id++;
+                }
+
                 continue;
             }
 
@@ -970,6 +994,15 @@ int main(int argc, char** argv)
             t5 = omp_get_wtime();
             
             /******* Publish points *******/
+            if (save_pcd)
+            {
+                pcl::io::savePCDFile(string(string(ROOT_DIR) + "map/pcd/" + to_string(lidar_id) + ".pcd"), *feats_down_body);
+                lidar_id++;
+                pose_file.open(string(string(ROOT_DIR) + "map/pose.json"), std::ios::app);
+                pose_file << state_point.pos.x() << " " << state_point.pos.y() << " " << state_point.pos.z() << " " << state_point.rot.w() << " "
+                          << state_point.rot.x() << " " << state_point.rot.y() << " " << state_point.rot.z() << endl;
+                pose_file.close();
+            }
             if (path_en)                         publish_path(pubPath);
             if (scan_pub_en || pcd_save_en)      publish_frame_world(pubLaserCloudFull);
             if (scan_pub_en && scan_body_pub_en) publish_frame_body(pubLaserCloudFull_body);

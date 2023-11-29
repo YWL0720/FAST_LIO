@@ -22,6 +22,7 @@ mapping:
     extrinsic_R: [ 1, 0, 0,
                    0, 1, 0,
                    0, 0, 1]
+    save_pcd: true
 
 publish:
     path_en:  false
