@@ -865,12 +865,6 @@ int main(int argc, char** argv)
     pose_file.precision(9);
     pose_file.setf(std::ios::fixed);
 
-    if (save_pcd)
-    {
-        pose_file.open(string(string(ROOT_DIR) + "map/pose.json"), std::ios::app);
-        pose_file << 0 << " " << 0 << " " << 0 << " " << 1 << " " << 0 << " " << 0 << " " << 0 << endl;
-        pose_file.close();
-    }
     int lidar_id = 0;
 
     while (status)
@@ -887,6 +881,24 @@ int main(int argc, char** argv)
 
                 if (save_pcd)
                 {
+                    // T_wl = T_w_i * T_i_l
+                    Eigen::Matrix4d T_w_i = Eigen::Matrix4d::Identity();
+                    T_w_i.block<3, 3>(0, 0) = state_point.rot.toRotationMatrix();
+                    T_w_i.block<3, 1>(0, 3) = state_point.pos;
+
+                    Eigen::Matrix4d T_i_l = Eigen::Matrix4d::Identity();
+                    T_i_l.block<3, 3>(0, 0) = state_point.offset_R_L_I.toRotationMatrix();
+                    T_i_l.block<3, 1>(0, 3) = state_point.offset_T_L_I;
+
+                    Eigen::Matrix4d T_w_l = Eigen::Matrix4d::Identity();
+                    T_w_l = T_w_i * T_i_l;
+                    Eigen::Vector3d t_w_l = T_w_l.block<3, 1>(0, 3);
+                    Eigen::Quaterniond q_w_l = Eigen::Quaterniond(T_w_l.block<3, 3>(0, 0));
+                    pose_file.open(string(string(ROOT_DIR) + "map/pose.json"), std::ios::app);
+                    pose_file << t_w_l.x() << " " << t_w_l.y() << " " << t_w_l.z() << " " << q_w_l.w() << " "
+                              << q_w_l.x() << " " << q_w_l.y() << " " << q_w_l.z() << endl;
+                    pose_file.close();
+
                     PointCloudXYZI::Ptr first_scan = Measures.lidar;
                     pcl::io::savePCDFile(string(string(ROOT_DIR) + "map/pcd/" + to_string(lidar_id) + ".pcd"), *first_scan);
                     lidar_id++;
@@ -994,15 +1006,31 @@ int main(int argc, char** argv)
             t3 = omp_get_wtime();
             map_incremental();
             t5 = omp_get_wtime();
-            
+
+
+
             /******* Publish points *******/
             if (save_pcd)
             {
+                // T_wl = T_w_i * T_i_l
+                Eigen::Matrix4d T_w_i = Eigen::Matrix4d::Identity();
+                T_w_i.block<3, 3>(0, 0) = state_point.rot.toRotationMatrix();
+                T_w_i.block<3, 1>(0, 3) = state_point.pos;
+
+                Eigen::Matrix4d T_i_l = Eigen::Matrix4d::Identity();
+                T_i_l.block<3, 3>(0, 0) = state_point.offset_R_L_I.toRotationMatrix();
+                T_i_l.block<3, 1>(0, 3) = state_point.offset_T_L_I;
+
+                Eigen::Matrix4d T_w_l = Eigen::Matrix4d::Identity();
+                T_w_l = T_w_i * T_i_l;
+                Eigen::Vector3d t_w_l = T_w_l.block<3, 1>(0, 3);
+                Eigen::Quaterniond q_w_l = Eigen::Quaterniond(T_w_l.block<3, 3>(0, 0));
+
                 pcl::io::savePCDFile(string(string(ROOT_DIR) + "map/pcd/" + to_string(lidar_id) + ".pcd"), *feats_down_body);
                 lidar_id++;
                 pose_file.open(string(string(ROOT_DIR) + "map/pose.json"), std::ios::app);
-                pose_file << state_point.pos.x() << " " << state_point.pos.y() << " " << state_point.pos.z() << " " << state_point.rot.w() << " "
-                          << state_point.rot.x() << " " << state_point.rot.y() << " " << state_point.rot.z() << endl;
+                pose_file << t_w_l.x() << " " << t_w_l.y() << " " << t_w_l.z() << " " << q_w_l.w() << " "
+                          << q_w_l.x() << " " << q_w_l.y() << " " << q_w_l.z() << endl;
                 pose_file.close();
             }
             if (path_en)                         publish_path(pubPath);
