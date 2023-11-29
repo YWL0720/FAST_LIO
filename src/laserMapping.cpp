@@ -381,7 +381,7 @@ bool sync_packages(MeasureGroup &meas)
             lidar_end_time = meas.lidar_beg_time + lidar_mean_scantime;
             ROS_WARN("Too few input point cloud!\n");
         }
-        else if (meas.lidar->points.back().curvature / double(1000) < 0.5 * lidar_mean_scantime)
+        else if (meas.lidar->points.back().curvature < 0.5 * lidar_mean_scantime)
         {
             lidar_end_time = meas.lidar_beg_time + lidar_mean_scantime;
         }
@@ -389,9 +389,11 @@ bool sync_packages(MeasureGroup &meas)
         {
             scan_num ++;
             lidar_end_time = meas.lidar_beg_time + meas.lidar->points.back().curvature / double(1000);
-            lidar_mean_scantime += (meas.lidar->points.back().curvature / double(1000) - lidar_mean_scantime) / scan_num;
+            //lidar_end_time = meas.lidar_beg_time + meas.lidar->points.back().curvature / double(1000);
+            //lidar_mean_scantime += (meas.lidar->points.back().curvature / double(1000) - lidar_mean_scantime) / scan_num;
+            lidar_mean_scantime += (meas.lidar->points.back().curvature - lidar_mean_scantime) / scan_num;
         }
-
+        lidar_end_time = meas.lidar_beg_time + lidar_mean_scantime;
         meas.lidar_end_time = lidar_end_time;
 
         lidar_pushed = true;
