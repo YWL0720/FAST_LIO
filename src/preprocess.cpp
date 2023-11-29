@@ -85,6 +85,8 @@ void Preprocess::process(const sensor_msgs::PointCloud2::ConstPtr &msg, PointClo
     break;
   }
   *pcl_out = pl_surf;
+  pcl_out->height = 1;
+  pcl_out->width = pcl_out->points.size();
 }
 
 void Preprocess::avia_handler(const livox_ros_driver::CustomMsg::ConstPtr &msg)
