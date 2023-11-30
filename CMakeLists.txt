@@ -84,6 +84,8 @@ catkin_package(
   INCLUDE_DIRS
 )
 
+add_executable(pose_process src/process_pose.cpp)
+target_link_libraries(pose_process ${PCL_LIBRARIES} )
 add_executable(fastlio_mapping src/laserMapping.cpp include/ikd-Tree/ikd_Tree.cpp src/preprocess.cpp)
 target_link_libraries(fastlio_mapping ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PYTHON_LIBRARIES})
 target_include_directories(fastlio_mapping PRIVATE ${PYTHON_INCLUDE_DIRS})

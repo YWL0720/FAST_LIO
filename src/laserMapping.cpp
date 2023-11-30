@@ -886,9 +886,15 @@ int main(int argc, char** argv)
                     T_w_i.block<3, 3>(0, 0) = state_point.rot.toRotationMatrix();
                     T_w_i.block<3, 1>(0, 3) = state_point.pos;
 
+                    cout << "T_w_i " << endl;
+                    cout << T_w_i << endl;
+
                     Eigen::Matrix4d T_i_l = Eigen::Matrix4d::Identity();
-                    T_i_l.block<3, 3>(0, 0) = state_point.offset_R_L_I.toRotationMatrix();
-                    T_i_l.block<3, 1>(0, 3) = state_point.offset_T_L_I;
+                    T_i_l.block<3, 3>(0, 0) = Lidar_R_wrt_IMU;
+                    T_i_l.block<3, 1>(0, 3) = Lidar_T_wrt_IMU;
+
+                    cout << "T_i_l" << endl;
+                    cout << T_i_l << endl;
 
                     Eigen::Matrix4d T_w_l = Eigen::Matrix4d::Identity();
                     T_w_l = T_w_i * T_i_l;
@@ -1018,8 +1024,8 @@ int main(int argc, char** argv)
                 T_w_i.block<3, 1>(0, 3) = state_point.pos;
 
                 Eigen::Matrix4d T_i_l = Eigen::Matrix4d::Identity();
-                T_i_l.block<3, 3>(0, 0) = state_point.offset_R_L_I.toRotationMatrix();
-                T_i_l.block<3, 1>(0, 3) = state_point.offset_T_L_I;
+                T_i_l.block<3, 3>(0, 0) = Lidar_R_wrt_IMU;
+                T_i_l.block<3, 1>(0, 3) = Lidar_T_wrt_IMU;
 
                 Eigen::Matrix4d T_w_l = Eigen::Matrix4d::Identity();
                 T_w_l = T_w_i * T_i_l;
