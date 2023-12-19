@@ -325,6 +325,8 @@ void livox_pcl_cbk(const livox_ros_driver::CustomMsg::ConstPtr &msg)
 
     PointCloudXYZI::Ptr  ptr(new PointCloudXYZI());
     p_pre->process(msg, ptr);
+    ptr->height = 1;
+    ptr->width = ptr->points.size();
     lidar_buffer.push_back(ptr);
     time_buffer.push_back(last_timestamp_lidar);
     
@@ -886,6 +888,8 @@ int main(int argc, char** argv)
                 if (save_pcd)
                 {
                     PointCloudXYZI::Ptr first_scan = Measures.lidar;
+                    first_scan->height = 1;
+                    first_scan->width = first_scan->points.size();
                     pcl::io::savePCDFile(string(string(ROOT_DIR) + "map/pcd/" + to_string(lidar_id) + ".pcd"), *first_scan);
                     lidar_id++;
                 }
@@ -996,6 +1000,8 @@ int main(int argc, char** argv)
             /******* Publish points *******/
             if (save_pcd)
             {
+                feats_down_body->height = 1;
+                feats_down_body->width = feats_down_body->points.size();
                 pcl::io::savePCDFile(string(string(ROOT_DIR) + "map/pcd/" + to_string(lidar_id) + ".pcd"), *feats_down_body);
                 lidar_id++;
                 pose_file.open(string(string(ROOT_DIR) + "map/pose.json"), std::ios::app);
